@@ -1,0 +1,46 @@
+{
+    "name": "heritageapps/help",
+    "description": "Shared help system and AI assistant for HeritageApps applications",
+    "type": "library",
+    "license": "proprietary",
+    "autoload": {
+        "psr-4": {
+            "HeritageApps\\Help\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "HeritageApps\\Help\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": "^8.3",
+        "illuminate/support": "^12.0",
+        "illuminate/database": "^12.0",
+        "illuminate/http": "^12.0",
+        "illuminate/mail": "^12.0",
+        "illuminate/console": "^12.0",
+        "livewire/livewire": "^3.0",
+        "spatie/laravel-markdown": "^1.0|^2.0",
+        "symfony/yaml": "^7.0"
+    },
+    "require-dev": {
+        "pestphp/pest": "^3.0",
+        "pestphp/pest-plugin-laravel": "^3.0",
+        "orchestra/testbench": "^10.0"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "HeritageApps\\Help\\Providers\\HeritageAppsHelpServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
