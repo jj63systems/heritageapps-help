@@ -6,6 +6,7 @@ use HeritageApps\Help\Console\Commands\IndexDocumentation;
 use HeritageApps\Help\Contracts\AppContextInterface;
 use HeritageApps\Help\Livewire\AiHelper;
 use HeritageApps\Help\Livewire\HelpCentre;
+use HeritageApps\Help\Livewire\HelpLibraryModal;
 use HeritageApps\Help\Livewire\HelpPanel;
 use HeritageApps\Help\Livewire\HelpSearchModal;
 use HeritageApps\Help\Services\AIHelperService;
@@ -72,6 +73,7 @@ class HeritageAppsHelpServiceProvider extends ServiceProvider
         Livewire::component('heritageapps-help::help-panel', HelpPanel::class);
         Livewire::component('heritageapps-help::help-search-modal', HelpSearchModal::class);
         Livewire::component('heritageapps-help::help-centre', HelpCentre::class);
+        Livewire::component('heritageapps-help::help-library-modal', HelpLibraryModal::class);
         Livewire::component('heritageapps-help::ai-helper', AiHelper::class);
 
         // Register artisan commands
