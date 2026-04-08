@@ -1,3 +1,4 @@
+<div>
 @teleport('body')
     <div
         x-data="{ open: @entangle('showModal') }"
@@ -91,3 +92,4 @@
         </div>
     </div>
 @endteleport
+</div>
