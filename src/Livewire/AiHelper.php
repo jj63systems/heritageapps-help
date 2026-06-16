@@ -8,6 +8,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class AiHelper extends Component
@@ -28,8 +29,7 @@ class AiHelper extends Component
 
     public array $debugInfo = [];
 
-    protected $listeners = ['openAIHelper' => 'openModal'];
-
+    #[On('openAIHelper')]
     public function openModal(): void
     {
         $this->open = true;

@@ -3,18 +3,18 @@
 namespace HeritageApps\Help\Livewire;
 
 use HeritageApps\Help\Services\DocumentationService;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class HelpSearchModal extends Component
 {
-    protected $listeners = ['open-help-search' => 'openModal'];
-
     public bool $showModal = false;
 
     public string $query = '';
 
     public array $results = [];
 
+    #[On('open-help-search')]
     public function openModal(): void
     {
         $this->showModal = true;
