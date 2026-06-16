@@ -70,11 +70,11 @@ class HeritageAppsHelpServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'heritageapps-help');
 
         // Register Livewire components
-        Livewire::component('heritageapps-help::help-panel', HelpPanel::class);
-        Livewire::component('heritageapps-help::help-search-modal', HelpSearchModal::class);
-        Livewire::component('heritageapps-help::help-centre', HelpCentre::class);
-        Livewire::component('heritageapps-help::help-library-modal', HelpLibraryModal::class);
-        Livewire::component('heritageapps-help::ai-helper', AiHelper::class);
+        Livewire::component('ha-help-panel', HelpPanel::class);
+        Livewire::component('ha-help-search-modal', HelpSearchModal::class);
+        Livewire::component('ha-help-centre', HelpCentre::class);
+        Livewire::component('ha-help-library-modal', HelpLibraryModal::class);
+        Livewire::component('ha-ai-helper', AiHelper::class);
 
         // Register artisan commands
         if ($this->app->runningInConsole()) {
