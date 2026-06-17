@@ -50,7 +50,8 @@ class DocumentationArticle extends Model
     public function versions(): HasMany
     {
         return $this->hasMany(
-            config('help.models.article_version', DocumentationArticleVersion::class)
+            config('help.models.article_version', DocumentationArticleVersion::class),
+            'documentation_article_id',
         )->orderBy('version_number', 'desc');
     }
 
