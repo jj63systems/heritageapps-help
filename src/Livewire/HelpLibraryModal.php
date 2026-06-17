@@ -28,17 +28,50 @@ class HelpLibraryModal extends Component
         $this->editing = false;
     }
 
+    #[On('open-help-panel-article-for-editing')]
+    public function openFromHelpPanel(string $key): void
+    {
+        $this->showModal = true;
+        $this->editing = false;
+        $this->creatingNew = false;
+        $this->editedFromList = false;
+        $this->openedFromHelpPanel = true;
+        $this->allArticles = [];
+        $this->displayArticles = [];
+        $this->viewArticle($key);
+
+        if ($this->canEditArticles()) {
+            $this->editArticle();
+        }
+    }
+
     #[On('open-help-library-article')]
     public function openArticle(string $key, bool $edit = false): void
     {
         $this->showModal = true;
+        $this->editing = false;
+        $this->creatingNew = false;
+        $this->editedFromList = false;
+        $this->openedFromHelpPanel = false;
+        // Clear library so nothing renders behind the article overlay
+        $this->allArticles = [];
+        $this->displayArticles = [];
         $this->viewArticle($key);
+        \Illuminate\Support\Facades\Log::debug('HelpLibraryModal::openArticle', [
+            'key' => $key,
+            'edit' => $edit,
+            'viewingArticleKey' => $this->viewingArticleKey,
+            'editedFromList' => $this->editedFromList,
+            'allArticles_count' => count($this->allArticles),
+        ]);
         if ($edit && $this->canEditArticles()) {
             $this->editArticle();
         }
     }
 
     public bool $showModal = false;
+
+    public bool $openedFromHelpPanel = false;
 
     public bool $baseDocumentationMode = false;
 
@@ -592,11 +625,20 @@ class HelpLibraryModal extends Component
         $this->editing = false;
         $this->editingVersionNumber = null;
 
-        // If user came directly from list, return to list
+        if ($this->openedFromHelpPanel) {
+            $docKey = $this->viewingArticleKey;
+            $this->showModal = false;
+            $this->openedFromHelpPanel = false;
+            $this->viewingArticleKey = null;
+            $this->viewingArticleHtml = null;
+            $this->dispatch('open-help', key: $docKey);
+
+            return;
+        }
+
         if ($this->editedFromList) {
             $this->backToList();
         } else {
-            // Otherwise reload the article view
             $this->viewArticle($this->viewingArticleKey);
         }
     }
@@ -725,8 +767,8 @@ class HelpLibraryModal extends Component
         }
 
         // Clear cache so changes appear immediately (both regular and draft cache)
-        \Illuminate\Support\Facades\Cache::forget("docs.rendered.{$this->viewingArticleKey}");
-        \Illuminate\Support\Facades\Cache::forget("docs.rendered.{$this->viewingArticleKey}.draft");
+        \Illuminate\Support\Facades\Cache::forget("help.docs.rendered.{$this->viewingArticleKey}");
+        \Illuminate\Support\Facades\Cache::forget("help.docs.rendered.{$this->viewingArticleKey}.draft");
 
         // Clear article list cache so new articles appear in the list
         $docs = app(DocumentationService::class);
@@ -754,8 +796,8 @@ class HelpLibraryModal extends Component
         }
 
         // Clear cache
-        \Illuminate\Support\Facades\Cache::forget("docs.rendered.{$this->viewingArticleKey}");
-        \Illuminate\Support\Facades\Cache::forget("docs.rendered.{$this->viewingArticleKey}.draft");
+        \Illuminate\Support\Facades\Cache::forget("help.docs.rendered.{$this->viewingArticleKey}");
+        \Illuminate\Support\Facades\Cache::forget("help.docs.rendered.{$this->viewingArticleKey}.draft");
 
         // Clear article list cache
         $docs = app(DocumentationService::class);
@@ -837,33 +879,45 @@ class HelpLibraryModal extends Component
         }
 
         // Clear cache - both the rendered article and the article list (regular and draft)
-        \Illuminate\Support\Facades\Cache::forget("docs.rendered.{$this->viewingArticleKey}");
-        \Illuminate\Support\Facades\Cache::forget("docs.rendered.{$this->viewingArticleKey}.draft");
+        \Illuminate\Support\Facades\Cache::forget("help.docs.rendered.{$this->viewingArticleKey}");
+        \Illuminate\Support\Facades\Cache::forget("help.docs.rendered.{$this->viewingArticleKey}.draft");
 
-        // Clear article list cache so new articles appear immediately
+        // Clear article list cache
         $docs = app(DocumentationService::class);
         $docs->clearAllMetaCache();
 
-        // Refresh article list
-        $docs = app(DocumentationService::class);
-        $this->allArticles = $docs->getAllMeta($this->showDrafts);
-        $this->displayArticles = $this->allArticles;
-        $this->sortDisplayArticles();
+        $this->editing = false;
+        $this->creatingNew = false;
+        $this->editingVersionNumber = null;
 
-        // Refresh outdated customizations list
-        if ($this->canEditArticles()) {
-            $this->outdatedCustomizations = $docs->getOutdatedCustomizations();
+        if ($this->openedFromHelpPanel) {
+            $docKey = $this->viewingArticleKey;
+            $this->showModal = false;
+            $this->openedFromHelpPanel = false;
+            $this->viewingArticleKey = null;
+            $this->viewingArticleHtml = null;
+            $this->dispatch('showToast', type: 'success', message: 'Article saved successfully');
+            $this->dispatch('open-help', key: $docKey);
+
+            return;
         }
 
-        // If currently viewing comparison for this article, reload it with fresh data
-        if ($this->showingComparison && $this->comparisonKey === $this->viewingArticleKey) {
-            $this->comparisonData = $docs->getComparison($this->viewingArticleKey);
+        if ($this->editedFromList) {
+            $docs = app(DocumentationService::class);
+            $this->allArticles = $docs->getAllMeta($this->showDrafts);
+            $this->displayArticles = $this->allArticles;
+            $this->sortDisplayArticles();
+
+            if ($this->canEditArticles()) {
+                $this->outdatedCustomizations = $docs->getOutdatedCustomizations();
+            }
+
+            $this->backToList();
+        } else {
+            $this->viewArticle($this->viewingArticleKey);
         }
 
-        // Return to library list (keep modal open)
-        $this->backToList();
-
-        $this->dispatch('showToast', type: 'success', message: 'Article published successfully');
+        $this->dispatch('showToast', type: 'success', message: 'Article saved successfully');
     }
 
     /**
@@ -924,7 +978,7 @@ class HelpLibraryModal extends Component
             file_put_contents($filePath, $newContent);
 
             // Clear cache
-            \Illuminate\Support\Facades\Cache::forget("docs.rendered.{$this->viewingArticleKey}");
+            \Illuminate\Support\Facades\Cache::forget("help.docs.rendered.{$this->viewingArticleKey}");
 
             $this->dispatch('showToast', type: 'success', message: 'Base documentation saved to markdown file');
         } catch (\Exception $e) {
@@ -1018,13 +1072,10 @@ class HelpLibraryModal extends Component
      */
     private function ensureTrixSpacing(string $html): string
     {
-        // Add a single line break after closing block-level tags for subtle spacing
-        $html = preg_replace('/<\/(p|h2|h3|ul|ol|blockquote)>/', "$0<br>", $html);
-
-        // Remove any trailing breaks at the end
-        $html = preg_replace('/(<br>\s*)+$/', '', $html);
-
-        return $html;
+        // Trix handles inter-block spacing via CSS, not <br> separators.
+        // Injecting <br> between blocks (e.g. after </p>) causes Trix to create empty
+        // paragraphs that persist on save and appear as blank lines in the rendered view.
+        return trim($html);
     }
 
     /**
@@ -1097,7 +1148,7 @@ class HelpLibraryModal extends Component
         $article->createVersion('Adopted core version', auth()->id());
 
         // Clear cache
-        \Illuminate\Support\Facades\Cache::forget("docs.rendered.{$this->comparisonKey}");
+        \Illuminate\Support\Facades\Cache::forget("help.docs.rendered.{$this->comparisonKey}");
 
         // Refresh outdated list
         $this->outdatedCustomizations = $docs->getOutdatedCustomizations();
